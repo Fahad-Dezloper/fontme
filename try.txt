@@ -1,0 +1,8 @@
+add font weight functionality
+
+
+testing command:
+bun run C:/Users/fahad/OneDrive/Documents/Desktop/font-cli/src/index.ts roboto
+
+chatgpt
+https://chatgpt.com/c/683ca1b1-ad34-800c-af4e-4845b0b7e772
