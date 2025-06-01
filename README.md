@@ -1,4 +1,4 @@
-# fontme 🧢
+# fontme
 
 **Easiest way to add Google Fonts to your Next.js 15 + Tailwind CSS v4 project.**
 
