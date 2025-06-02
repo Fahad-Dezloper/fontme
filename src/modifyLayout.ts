@@ -2,7 +2,12 @@ import fs from 'fs-extra';
 import path from 'path';
 import { pascalCase } from './utils';
 
-export async function modifyLayout(fontName: string, alias: string) {
+export async function modifyLayout(
+  fontName: string,
+  alias: string,
+  weights: string[],
+  subsets: string[]
+) {
   const layoutPath = path.resolve('app/layout.tsx');
 
   if (!await fs.pathExists(layoutPath)) {
@@ -21,22 +26,29 @@ export async function modifyLayout(fontName: string, alias: string) {
 
   let newCode = layoutCode;
 
-  // Add import for font
+  // Add import
   newCode = newCode.replace(
     /(^import .*?;)/m,
     `$1\nimport { ${FontComponent} } from 'next/font/google';`
   );
 
-  // Add font const declaration
+  // Prepare font options
+  const subsetsCode = `subsets: [${subsets.map(s => `'${s}'`).join(', ')}]`;
+  const weightsCode = weights.length > 0 ? `weight: [${weights.map(w => `'${w}'`).join(', ')}], ` : '';
+  const variableCode = `variable: '--font-${alias}'`;
+
+  const fontOptions = `{ ${weightsCode}${subsetsCode}, ${variableCode} }`;
+
+  // Insert font definition
   newCode = newCode.replace(
     /(^\s*)(export const metadata|export default function)/m,
-    `\nconst ${fontVar} = ${FontComponent}({ subsets: ['latin'], variable: '--font-${alias}' });\n$1$2`
+    `\nconst ${fontVar} = ${FontComponent}(${fontOptions});\n$1$2`
   );
 
+  // Update <body> className
   const bodyClassRegex = /<body([^>]*)className={(["'`]?)(.*?)\2}([^>]*)>/s;
 
   if (bodyClassRegex.test(newCode)) {
-    // Merge with existing className
     newCode = newCode.replace(
       bodyClassRegex,
       (_, beforeAttrs, quote, existingClasses, after) => {
@@ -46,14 +58,11 @@ export async function modifyLayout(fontName: string, alias: string) {
       }
     );
   } else {
-    // No className present, add a new one
     newCode = newCode.replace(
       /<body([^>]*)>/,
       `<body$1 className={\`\${${fontVar}.variable} antialiased\`}>`
     );
   }
-  
-
 
   await fs.writeFile(layoutPath, newCode, 'utf-8');
 }
