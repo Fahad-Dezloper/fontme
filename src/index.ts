@@ -16,8 +16,39 @@ const FONT_WEIGHTS = [
 ];
 
 const FONT_SUBSETS = [
-  "latin", "latin-ext", "cyrillic", "cyrillic-ext",
-  "greek", "greek-ext", "vietnamese", "devanagari"
+  {
+    value: "latin",
+    name: "Latin (English, French, Spanish, German, etc.)",
+    checked: true
+  },
+  {
+    value: "latin-ext",
+    name: "Latin Extended (Polish, Czech, Hungarian, etc.)"
+  },
+  {
+    value: "cyrillic",
+    name: "Cyrillic (Russian, Bulgarian, Serbian, etc.)"
+  },
+  {
+    value: "cyrillic-ext",
+    name: "Cyrillic Extended (Ukrainian, Belarusian, etc.)"
+  },
+  {
+    value: "greek",
+    name: "Greek (Modern Greek)"
+  },
+  {
+    value: "greek-ext",
+    name: "Greek Extended (Ancient Greek, Coptic)"
+  },
+  {
+    value: "vietnamese",
+    name: "Vietnamese"
+  },
+  {
+    value: "devanagari",
+    name: "Devanagari (Hindi, Sanskrit, etc.)"
+  }
 ];
 
 async function isAliasTaken(alias: string) {
@@ -131,12 +162,13 @@ async function main() {
       {
         type: "checkbox",
         name: "subsets",
-        message: "Select font subsets:",
+        message: "Choose language support (for faster load times):\n" + 
+                 chalk.gray("We'll only include the characters you need."),
         choices: FONT_SUBSETS.filter(subset => 
-          selectedFont.subsets.includes(subset)
+          selectedFont.subsets.includes(subset.value)
         ),
         default: ["latin"],
-        validate: input => input.length > 0 ? true : "Select at least one subset",
+        validate: input => input.length > 0 ? true : "Select at least one language support",
       },
     ]);
 

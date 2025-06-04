@@ -23,4 +23,3 @@ Autocomplete Font Names
 //something fun to add
 Dark Mode Font Preview (CLI)
 
-#!/usr/bin/env node
