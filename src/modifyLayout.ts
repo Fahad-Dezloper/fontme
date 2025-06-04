@@ -28,8 +28,8 @@ export async function modifyLayout(
   }
 
   const layoutCode = await fs.readFile(layoutPath, 'utf-8');
-  const FontComponent = pascalCase(fontName); // e.g., roboto → Roboto
-  const fontVar = fontName.toLowerCase();     // roboto
+  const FontComponent = pascalCase(fontName); // e.g., "AR One Sans" → "ArOneSans"
+  const fontVar = fontName.toLowerCase().replace(/\s+/g, ''); // e.g., "AR One Sans" → "aronesans"
 
   // Prevent duplicates
   if (layoutCode.includes(`const ${fontVar} = ${FontComponent}`)) {
