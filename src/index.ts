@@ -4,8 +4,12 @@ import fs from "fs-extra";
 import path from "path";
 import { modifyLayout } from "./modifyLayout";
 import { modifyCSS } from "./modifyCSS";
+import { fetchGoogleFonts, previewFont, searchFonts } from "./googleFonts";
+import inquirerPrompt from "inquirer-autocomplete-prompt";
+import type { Font } from "./types";
 
-// Predefined options
+inquirer.registerPrompt('autocomplete', inquirerPrompt);
+
 const FONT_WEIGHTS = [
   "100", "200", "300", "400", "500", "600", "700", "800", "900",
   "normal", "bold"
@@ -30,66 +34,120 @@ async function isAliasTaken(alias: string) {
 }
 
 async function main() {
-  const { fontName } = await inquirer.prompt([
-    {
-      type: "input",
-      name: "fontName",
-      message: "Enter Google Font name (e.g. Roboto):",
-      validate: input => input.trim() ? true : "Font name cannot be empty",
-    },
-  ]);
+  try {
+    console.log(chalk.cyan('Fetching Google Fonts...'));
+    const fonts = await fetchGoogleFonts();
+    
+    if (fonts.length === 0) {
+      throw new Error('Failed to fetch Google Fonts. Please check your internet connection.');
+    }
 
-  let alias = fontName.toLowerCase();
+    let selectedFont: Font | null = null;
+    let confirmed = false;
 
-  // Ask for alias with validation & conflict check
-  while (true) {
-    const answer = await inquirer.prompt([
+    while (!confirmed) {
+      const { selectedFont: font } = await inquirer.prompt<{ selectedFont: Font }>([
+        {
+          type: "autocomplete" as const,
+          name: "selectedFont",
+          message: "Search for a Google Font:",
+          source: (_answersSoFar: any, input: string) => {
+            const results = searchFonts(fonts, input || '');
+            return results.map(font => ({
+              name: font.family,
+              value: font
+            }));
+          },
+          pageSize: 10,
+          validate: (input: any) => input ? true : 'Please select a font'
+        }
+      ]);
+
+      previewFont(font);
+
+      const { confirm } = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "confirm",
+          message: `Do you want to use "${font.family}"?`,
+          default: true
+        }
+      ]);
+
+      if (confirm) {
+        selectedFont = font;
+        confirmed = true;
+      } else {
+        console.log(chalk.yellow('Let\'s try another font...\n'));
+      }
+    }
+
+    if (!selectedFont) {
+      throw new Error('No font was selected');
+    }
+
+    let alias = selectedFont.family.toLowerCase();
+
+    while (true) {
+      const answer = await inquirer.prompt([
+        {
+          type: "input",
+          name: "alias",
+          message: `Give "${selectedFont.family}" a nickname (e.g. "primary"):`,
+          default: alias,
+        },
+      ]);
+
+      alias = answer.alias.trim();
+
+      if (!alias) {
+        console.log(chalk.red("Alias cannot be empty. Please try again."));
+        continue;
+      }
+
+      if (await isAliasTaken(alias)) {
+        console.log(chalk.yellow(`⚠️ Alias "${alias}" already exists. Please choose another.`));
+        continue;
+      }
+
+      break;
+    }
+
+    const availableWeights = FONT_WEIGHTS.filter(weight => 
+      selectedFont.variants.includes(weight) && !weight.includes('italic')
+    );
+
+    const defaultWeight = availableWeights.includes('400') ? '400' : 'regular';
+
+    const { weights, subsets } = await inquirer.prompt([
       {
-        type: "input",
-        name: "alias",
-        message: `Give "${fontName}" a nickname (e.g. "primary"):`,
-        default: alias,
+        type: "checkbox",
+        name: "weights",
+        message: "Select font weights (space to select):",
+        choices: availableWeights.length > 0 ? availableWeights : ['regular'],
+        default: [defaultWeight],
+        validate: input => input.length > 0 ? true : "Select at least one weight",
+      },
+      {
+        type: "checkbox",
+        name: "subsets",
+        message: "Select font subsets:",
+        choices: FONT_SUBSETS.filter(subset => 
+          selectedFont.subsets.includes(subset)
+        ),
+        default: ["latin"],
+        validate: input => input.length > 0 ? true : "Select at least one subset",
       },
     ]);
 
-    alias = answer.alias.trim();
+    await modifyLayout(selectedFont.family, alias, weights, subsets);
+    await modifyCSS(selectedFont.family, alias);
 
-    if (!alias) {
-      console.log(chalk.red("Alias cannot be empty. Please try again."));
-      continue;
-    }
-
-    if (await isAliasTaken(alias)) {
-      console.log(chalk.yellow(`⚠️ Alias "${alias}" already exists. Please choose another.`));
-      continue;
-    }
-
-    break;
+    console.log(chalk.green(`✅ Installed "${selectedFont.family}" as "font-${alias}"`));
+  } catch (error) {
+    console.error(chalk.red('\n❌ Error:'), error instanceof Error ? error.message : 'An unexpected error occurred');
+    process.exit(1);
   }
-
-  const { weights, subsets } = await inquirer.prompt([
-    {
-      type: "checkbox",
-      name: "weights",
-      message: "Select font weights (space to select):",
-      choices: FONT_WEIGHTS,
-      default: ["400"],
-      validate: input => input.length > 0 ? true : "Select at least one weight",
-    },
-    {
-      type: "checkbox",
-      name: "subsets",
-      message: "Select font subsets:",
-      choices: FONT_SUBSETS,
-      default: ["latin"],
-      validate: input => input.length > 0 ? true : "Select at least one subset",
-    },
-  ]);
-
-  await modifyLayout(fontName, alias, weights, subsets);
-  await modifyCSS(fontName, alias);
-
-  console.log(chalk.green(`✅ Installed "${fontName}" as "font-${alias}"`));
 }
 
 main();

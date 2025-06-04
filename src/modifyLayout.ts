@@ -9,9 +9,22 @@ export async function modifyLayout(
   subsets: string[]
 ) {
   const layoutPath = path.resolve('app/layout.tsx');
+  const appDirPath = path.resolve('app');
 
+  // Check if this is a Next.js project
+  if (!await fs.pathExists(appDirPath)) {
+    throw new Error(
+      '❌ This does not appear to be a Next.js project.\n' +
+      'Please run this command in a Next.js project directory with an "app" folder.'
+    );
+  }
+
+  // Check for layout file
   if (!await fs.pathExists(layoutPath)) {
-    throw new Error('app/layout.tsx not found');
+    throw new Error(
+      '❌ app/layout.tsx not found.\n' +
+      'Please make sure you have a layout file at app/layout.tsx in your Next.js project.'
+    );
   }
 
   const layoutCode = await fs.readFile(layoutPath, 'utf-8');
