@@ -129,7 +129,7 @@ async function main() {
         },
       ]);
 
-      alias = answer.alias.trim();
+      alias = answer.alias.trim().toLowerCase().replace(/\s+/g, '-');
 
       if (!alias) {
         console.log(chalk.red("Alias cannot be empty. Please try again."));
