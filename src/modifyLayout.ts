@@ -28,8 +28,11 @@ export async function modifyLayout(
   }
 
   const layoutCode = await fs.readFile(layoutPath, 'utf-8');
-  const FontComponent = pascalCase(fontName); // e.g., "AR One Sans" → "ArOneSans"
-  const fontVar = fontName.toLowerCase().replace(/\s+/g, ''); // e.g., "AR One Sans" → "aronesans"
+  
+  // Convert font name to match Google Fonts export name
+  // e.g., "Cabin Sketch" -> "Cabin_Sketch"
+  const FontComponent = fontName.replace(/\s+/g, '_');
+  const fontVar = fontName.toLowerCase().replace(/\s+/g, ''); // e.g., "Cabin Sketch" -> "cabinsketch"
 
   // Prevent duplicates
   if (layoutCode.includes(`const ${fontVar} = ${FontComponent}`)) {
