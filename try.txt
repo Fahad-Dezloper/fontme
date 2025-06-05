@@ -13,13 +13,15 @@ https://chatgpt.com/c/683ca1b1-ad34-800c-af4e-4845b0b7e772
 //added
 font weight added with subset
 
-//pending
-Autocomplete Font Names
+//Done
+Autocomplete Font Names == Done
+Dark Mode Font Preview (CLI) == Done
+
+//v3
  Detect Tailwind v4 Structure
   Safe Undo
   List Installed Fonts
   Remove Font
 
-//something fun to add
-Dark Mode Font Preview (CLI)
+
 
