@@ -50,7 +50,10 @@ export async function modifyLayout(
 
   // Prepare font options
   const subsetsCode = `subsets: [${subsets.map(s => `'${s}'`).join(', ')}]`;
-  const weightsCode = weights.length > 0 ? `weight: [${weights.map(w => `'${w}'`).join(', ')}], ` : '';
+  
+  // Convert 'regular' to '400' for the weight option
+  const processedWeights = weights.map(w => w === 'regular' ? '400' : w);
+  const weightsCode = processedWeights.length > 0 ? `weight: [${processedWeights.map(w => `'${w}'`).join(', ')}], ` : '';
   const variableCode = `variable: '--font-${alias}'`;
 
   const fontOptions = `{ ${weightsCode}${subsetsCode}, ${variableCode} }`;
