@@ -24,4 +24,6 @@ Dark Mode Font Preview (CLI) == Done
   Remove Font
 
 
+#!/usr/bin/env node
+
 
