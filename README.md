@@ -1,30 +1,37 @@
-# fontme
+# 🧢 fontme
 
-**Easiest way to add Google Fonts to your Next.js 15 + Tailwind CSS v4 project.**
+**Add Google Fonts to your Next.js 15 + Tailwind CSS v4 project in seconds — with custom nicknames like `font-homie`.**
 
-Skip the boilerplate and let `fontme` handle:
-- Importing fonts from `next/font/google`
-- Adding CSS variables via the new `@theme` syntax in `globals.css`
-- Updating `app/layout.tsx` to apply the font globally
-- Allowing you to give each font a custom alias like `font-primary`, `font-heading`, etc.
+No more manual importing, copy-pasting, or setup.  
+Just one command and `fontme` wires it all up for you.
 
 ---
 
-## ✨ Features
+## ✨ What It Does
 
--  One-command Google Fonts integration  
--  Intelligent nickname support (e.g. `font-body`, `font-brand`)  
--  Tailored for Tailwind CSS v4 with no `tailwind.config.js` required  
--  Works with Next.js 15 app directory structure  
+`fontme` handles the boring stuff:
+- Imports fonts from `next/font/google`
+- Adds `@theme` CSS variables to `globals.css`
+- Updates `app/layout.tsx` with your font + alias
+- Lets you nickname fonts like `font-body`, `font-brand`, etc.
 
 ---
 
-## 📦 Installation
+## 🔥 Features
 
-You can run it directly with `npx`:
+-  One-command Google Fonts setup  
+-  Custom alias support (e.g. `font-primary`, `font-logo`)  
+-  Built for Tailwind CSS v4 (no config editing needed)  
+-  Works with Next.js 15 App Router  
+
+---
+
+## ⚡️ Install & Run
+
+Use it instantly via `npx`:
 
 ```bash
-npx fontme roboto
+npx fontme
 ```
 
 Or install it globally:
@@ -37,41 +44,26 @@ npm install -g fontme
 
 ---
 
-## 🛠 How It Works
+## ⚙️ How It Works
 
-1. Prompts you for a nickname (alias) for the font.
-2. Updates `app/layout.tsx` to import the font from `next/font/google` and apply the variable + alias.
-3. Adds a `@theme` variable in `globals.css`:
-   ```css
-   @theme {
-     --font-roboto: 'Roboto', sans-serif;
-   }
-   ```
+1. Asks you to give your font a nickname (like `body`, `display`, etc.)
+2. Automatically updates `app/layout.tsx` with the font import and usage
+3. Injects this into your `globals.css`:
 
----
-
-## 🧪 Example
-
-```bash
-npx fontme roboto
+```css
+@theme {
+  --font-roboto: 'Roboto', sans-serif;
+}
 ```
 
-Then when prompted:
+And applies it to your layout:
 
-```
-Give "roboto" a nickname (e.g. "primary"): body
-```
-
-Updates your layout:
-
-```ts
+```tsx
 const roboto = Roboto({
   subsets: ['latin'],
   variable: '--font-roboto',
 });
 ```
-
-Applies it in the body:
 
 ```tsx
 <body className={`${roboto.variable} font-body`}>
@@ -79,12 +71,28 @@ Applies it in the body:
 
 ---
 
-## 💡 Tip
+## 🧪 Example
 
-If you try to reuse a nickname that already exists in your layout, `fontme` will ask you to choose a different one.
+```bash
+npx fontme
+```
+
+When prompted:
+
+```
+Give "roboto" a nickname (e.g. "primary"): body
+```
+
+You now have `font-body` ready to use in your Tailwind project!
 
 ---
 
-## 📄 License
+## 💡 Pro Tip
+
+Reusing an alias? `fontme` will warn you and ask for a new one — no accidental overwrites.
+
+---
+
+## 🪪 License
 
 MIT © [Fahad-Dezloper](https://github.com/Fahad-Dezloper)
