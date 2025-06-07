@@ -74,7 +74,7 @@ const roboto = Roboto({
 ## 🧪 Example
 
 ```bash
-npx fontme roboto
+npx fontme
 ```
 
 When prompted:
