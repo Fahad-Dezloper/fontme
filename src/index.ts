@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import inquirer from "inquirer";
 import chalk from "chalk";
 import fs from "fs-extra";
@@ -7,6 +8,7 @@ import { modifyCSS } from "./modifyCSS";
 import { fetchGoogleFonts, previewFont, searchFonts } from "./googleFonts";
 import inquirerPrompt from "inquirer-autocomplete-prompt";
 import type { Font } from "./types";
+import { findCSSFile } from "./utils";
 
 inquirer.registerPrompt('autocomplete', inquirerPrompt);
 
@@ -52,8 +54,8 @@ const FONT_SUBSETS = [
 ];
 
 async function isAliasTaken(alias: string) {
-  const cssPath = path.resolve("app/globals.css");
-  if (!(await fs.pathExists(cssPath))) return false;
+  const cssPath = await findCSSFile();
+  if (!cssPath) return false;
 
   const cssContent = await fs.readFile(cssPath, "utf-8");
   const themeBlockRegex = /@theme\s*{([\s\S]*?)}/m;
@@ -129,7 +131,7 @@ async function main() {
         },
       ]);
 
-      alias = answer.alias.trim().toLowerCase().replace(/\s+/g, '-');
+      alias = answer.alias.trim().toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
 
       if (!alias) {
         console.log(chalk.red("Alias cannot be empty. Please try again."));

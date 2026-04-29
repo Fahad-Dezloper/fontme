@@ -1,6 +1,5 @@
 import fs from 'fs-extra';
-import path from 'path';
-import { pascalCase } from './utils';
+import { pascalCase, findLayoutFile } from './utils';
 
 export async function modifyLayout(
   fontName: string,
@@ -8,22 +7,12 @@ export async function modifyLayout(
   weights: string[],
   subsets: string[]
 ) {
-  const layoutPath = path.resolve('app/layout.tsx');
-  const appDirPath = path.resolve('app');
+  const layoutPath = await findLayoutFile();
 
-  // Check if this is a Next.js project
-  if (!await fs.pathExists(appDirPath)) {
+  if (!layoutPath) {
     throw new Error(
-      '❌ This does not appear to be a Next.js project.\n' +
-      'Please run this command in a Next.js project directory with an "app" folder.'
-    );
-  }
-
-  // Check for layout file
-  if (!await fs.pathExists(layoutPath)) {
-    throw new Error(
-      '❌ app/layout.tsx not found.\n' +
-      'Please make sure you have a layout file at app/layout.tsx in your Next.js project.'
+      '❌ layout.tsx not found (checked app/, src/app/, etc.).\n' +
+      'Please make sure you are in a Next.js project directory.'
     );
   }
 
@@ -54,7 +43,7 @@ export async function modifyLayout(
   // Convert 'regular' to '400' for the weight option
   const processedWeights = weights.map(w => w === 'regular' ? '400' : w);
   const weightsCode = processedWeights.length > 0 ? `weight: [${processedWeights.map(w => `'${w}'`).join(', ')}], ` : '';
-  const variableCode = `variable: '--font-${alias}'`;
+  const variableCode = `variable: '--font-next-${alias}'`;
 
   const fontOptions = `{ ${weightsCode}${subsetsCode}, ${variableCode} }`;
 
@@ -64,23 +53,38 @@ export async function modifyLayout(
     `\nconst ${fontVar} = ${FontComponent}(${fontOptions});\n$1$2`
   );
 
-  // Update <body> className
-  const bodyClassRegex = /<body([^>]*)className={(["'`]?)(.*?)\2}([^>]*)>/s;
+  // Update <body> className robustly
+  const bodyTagRegex = /<body([^>]*)>/s;
+  const bodyMatch = newCode.match(bodyTagRegex);
 
-  if (bodyClassRegex.test(newCode)) {
-    newCode = newCode.replace(
-      bodyClassRegex,
-      (_, beforeAttrs, quote, existingClasses, after) => {
-        const classes = existingClasses.trim();
-        const insertion = `\${${fontVar}.variable} ${classes}`;
-        return `<body${beforeAttrs}className={\`${insertion}\`}${after}>`;
+  if (bodyMatch) {
+    const fullTag = bodyMatch[0];
+    const attrs = bodyMatch[1];
+    
+    // Support className="...", className='...', className={...}
+    const classNameRegex = /className=(?:{[`'"]?(.*?)?[`'"]?}|(["'])(.*?)\2)/;
+    const classMatch = attrs.match(classNameRegex);
+
+    if (classMatch) {
+      const existingClasses = (classMatch[1] || classMatch[3] || '').trim();
+      
+      if (!existingClasses.includes(`${fontVar}.variable`)) {
+        // If it's already a template literal, just insert the new variable at the start
+        let newClassName;
+        if (classMatch[1] && existingClasses.includes('${')) {
+           newClassName = `className={\`\${${fontVar}.variable} ${existingClasses}\`}`;
+        } else {
+           newClassName = `className={\`\${${fontVar}.variable} ${existingClasses}\`}`;
+        }
+        
+        const newAttrs = attrs.replace(classNameRegex, newClassName);
+        newCode = newCode.replace(fullTag, `<body${newAttrs}>`);
       }
-    );
-  } else {
-    newCode = newCode.replace(
-      /<body([^>]*)>/,
-      `<body$1 className={\`\${${fontVar}.variable} antialiased\`}>`
-    );
+    } else {
+      // No className present, add a new one
+      const newAttrs = `${attrs.trim()} className={\`\${${fontVar}.variable} antialiased\`}`;
+      newCode = newCode.replace(fullTag, `<body ${newAttrs}>`);
+    }
   }
 
   await fs.writeFile(layoutPath, newCode, 'utf-8');

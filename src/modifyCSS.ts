@@ -1,20 +1,20 @@
 import fs from 'fs-extra';
-import path from 'path';
+import { findCSSFile } from './utils';
 
 export async function modifyCSS(fontName: string, alias: string) {
-  const cssPath = path.resolve('app/globals.css');
+  const cssPath = await findCSSFile();
 
-  if (!(await fs.pathExists(cssPath))) {
-    throw new Error('❌ app/globals.css not found');
+  if (!cssPath) {
+    throw new Error('❌ globals.css not found (checked app/, src/app/, styles/, src/styles/)');
   }
 
   const cssContent = await fs.readFile(cssPath, 'utf-8');
 
   const varName = `--font-${alias}`;
-  const varValue = `'${fontName}', sans-serif;`;
+  const varValue = `var(--font-next-${alias});`;
   const newVariableLine = `  ${varName}: ${varValue}`;
 
-  const themeBlockRegex = /@theme\s*{([\s\S]*?)}/m;
+  const themeBlockRegex = /@theme(?:\s+[\w-]+)?\s*{([\s\S]*?)}/m;
 
   if (themeBlockRegex.test(cssContent)) {
     const currentThemeContent = cssContent.match(themeBlockRegex)![1];
@@ -34,9 +34,9 @@ export async function modifyCSS(fontName: string, alias: string) {
     await fs.writeFile(cssPath, updatedCss, 'utf-8');
     console.log(`✅ Added ${varName} to existing @theme block.`);
   } else {
-    const themeBlock = `\n@theme {\n${newVariableLine}\n}\n`;
-
+    const themeBlock = `\n@theme inline {\n${newVariableLine}\n}\n`;
+    
     await fs.appendFile(cssPath, themeBlock, 'utf-8');
-    console.log(`✅ Created new @theme block with ${varName}.`);
+    console.log(`✅ Created new @theme inline block with ${varName}.`);
   }
 }

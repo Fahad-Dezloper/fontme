@@ -2,8 +2,8 @@ import chalk from 'chalk';
 import figlet from 'figlet';
 import type { Font } from './types';
 
-const GOOGLE_FONTS_API_KEY = process.env.GOOGLE_FONTS_API_KEY;
-const API_URL = process.env.API_URL;
+const GOOGLE_FONTS_API_KEY = process.env.GOOGLE_FONTS_API_KEY || "AIzaSyCT4D1L3a4HQ5_Ro7ha-GkIMgPW8L-t6mA";
+const API_URL = process.env.API_URL || "https://www.googleapis.com/webfonts/v1/webfonts";
 
 export async function fetchGoogleFonts(): Promise<Font[]> {
   try {
